@@ -21,6 +21,17 @@ func GetBytesFromUrl(imageUrl string) ([]byte, error) {
 	return io.ReadAll(response.Body)
 }
 
+func OutputExists(fileName string, validExtensionMap map[string]bool) bool {
+	for extension := range validExtensionMap {
+		newFilePath := fmt.Sprintf("../assets/output/%s%s", fileName, extension)
+		if _, err := os.Stat(newFilePath); err == nil {
+			return true
+		}
+	}
+
+	return false
+}
+
 func ReadCSV(filename string) ([]string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -43,10 +54,13 @@ func ReadCSV(filename string) ([]string, error) {
 	return lines, nil
 }
 
-func SaveFile(fileBytes []byte, fileName string) error {
-	newFilePath := fmt.Sprintf("../assets/output/%s%s", fileName, mimetype.Detect(fileBytes).Extension())
+func SaveFile(fileBytes []byte, fileName string, validExtensionsMap map[string]bool) error {
+	extension := mimetype.Detect(fileBytes).Extension()
+	if !validExtensionsMap[extension] {
+		return fmt.Errorf("invalid extension [%s] for file [%s]", extension, fileName)
+	}
 
-	file, err := os.Create(newFilePath)
+	file, err := os.Create(fmt.Sprintf("../assets/output/%s%s", fileName, extension))
 	if err != nil {
 		return err
 	}
